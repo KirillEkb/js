@@ -28,17 +28,21 @@ function createElement(elemTag, ...elemClass) {
     return elem
 }
 
-body.append(main);
 main.append(input, autocomplete);
+body.append(main);
 
-input.addEventListener('keyup', debounce(async function() {
+const clearingAutocomplite = function() {
+    while(autocomplete.firstChild) {
+        autocomplete.removeChild(autocomplete.firstChild)
+    }
+}
+
+input.addEventListener('input', debounce(async function() {
     this.value = this.value.trim();
     if  (!this.value) {
-        for (child of autocomplete.childNodes) {
-            child.remove();
-        }
+        clearingAutocomplite();
     }
-    let response = await fetch(`https://api.github.com/search/repositories?q=${this.value}}`);
+    let response = await fetch(`https://api.github.com/search/repositories?q=${this.value}&per_page=5`);
     let repos = await response.json();
     if (!repos.items.length) {
         autocomplete.textContent = 'nothing found for your request';
@@ -46,9 +50,7 @@ input.addEventListener('keyup', debounce(async function() {
     }
     function getListContent() {
         if (autocomplete.childNodes.length) {
-            while(autocomplete.firstChild) {
-                autocomplete.removeChild(autocomplete.firstChild)
-            }
+            clearingAutocomplite();
         }
         let fragment = new DocumentFragment();
         for(let i=0; i<=4; i++) {
@@ -85,6 +87,7 @@ autocomplete.addEventListener('click', function(evt) {
             cloned.append(clonedBtn);
             main.append(newSaved(cloned));
             input.value ='';
+            clearingAutocomplite();
     }
 })
 
